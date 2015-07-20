@@ -77,3 +77,16 @@ size = function (t)
   for _ in pairs(t) do z = z + 1 end
   return z
 end
+split = function (str, delim)
+  str = str .. delim
+  local b, e = 0, 0
+  local pos = 1
+  local out = {}
+  repeat
+    b, e = string.find(str, delim, pos, true)
+    local s = string.sub(str, pos, b - 1)
+    table.insert(out, s)
+    pos = e + 1
+  until e == string.len(str)
+  return out
+end

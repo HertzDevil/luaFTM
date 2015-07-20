@@ -1,4 +1,4 @@
-require "luaFTM"
+require "luaFTM.FTM"
 
 local FXCHAR = {}
 string.gsub("FBDCE3?HI047PGZ12VYQRASXMHIJW", "()(.)", function (x, y) FXCHAR[x] = y end)
@@ -73,8 +73,7 @@ function rowView:step (play)
   f, r = f + math.floor((r - 1) / tr.rows), (r - 1) % tr.rows + 1
   
   if play ~= false then
-    local g = self:globalFX()
-    for _, v in pairs(self:globalFX()) do
+    for _, v in pairs(self.lastFX) do
       if v.name == FX.JUMP then
         f, r = (play and v.param or self.frame) + 1, 1
       elseif v.name == FX.SKIP then
