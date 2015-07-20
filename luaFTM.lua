@@ -1,4 +1,8 @@
-require "luaFTM/utils"
+-- luaFTM - lightweight FamiTracker module library
+-- Copyright (C) 2015 HertzDevil
+-- MIT License.
+
+require "luaFTM.utils"
 
 CHIP = {APU = 0, VRC6 = 1, VRC7 = 2, FDS = 4, MMC5 = 8, N163 = 16, S5B = 32}
 INST = enum {"APU", "VRC6", "VRC7", "FDS", "N163", "S5B"}
@@ -92,8 +96,6 @@ function FTM:newFTM ()
   ftm.param = {chip = 0, machine = "NTSC", rate = 0, newVibrato = true, highlight = {4, 16}, FxxSplit = 32, namcoCh = 0}
   ftm.info = {title = "", author = "", copyright = ""}
   ftm.comment = {open = false, str = ""}
-  if usedetune then ftm.detune = {} end
-  if usegroove then ftm.groove = {} end
   ftm.track[1] = ftm:newTrack()
   return ftm
 end
