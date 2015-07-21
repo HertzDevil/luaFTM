@@ -77,6 +77,25 @@ function FTM:getTrackChs ()
   return t
 end
 
+function FTM.getChName (t)
+  local fullName = {
+    [CHIP.APU] = {"2A03 Pulse 1", "2A03 Pulse 2", "Triangle", "Noise", "DPCM"},
+    [CHIP.VRC6] = {"VRC6 Pulse 1", "VRC6 Pulse 2", "Sawtooth"},
+    [CHIP.VRC7] = "VRC7 Channel",
+    [CHIP.FDS] = {"FDS"},
+    [CHIP.MMC5] = "MMC5 Pulse",
+    [CHIP.N163] = "N163 Channel",
+    [CHIP.S5B] = "5B Square",
+  }
+  if type(fullName[t[1]]) == "string" then
+    return fullName[t[1]] .. " " .. tonumber(t[2])
+  elseif type(fullName[t[1]]) == "table" then
+    return fullName[t[1]][t[2]]
+  else
+    return "???"
+  end
+end
+
 function FTM:newTrack ()
   local t = {speed = 6, tempo = 150, rows = 64}
   t.maxeffect = {}
@@ -196,7 +215,7 @@ function FTM:loadFTM (name)
       for i = 1, 12 * (ver == 1 and 6 or 8) do
         local id = getuchar(f)
         local pitch = getuchar(f)
-        local delta = getchar(f)
+        local delta = ver > 5 and getchar(f) or -1
         if id ~= 0 then
           v.dpcm[i] = {id = id, pitch = pitch}
           if delta ~= -1 then v.dpcm[i].delta = delta end
