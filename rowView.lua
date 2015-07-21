@@ -37,12 +37,19 @@ end
 
 function rowView:globalFX ()
   local skip, speed, tempo
+  local hasHalt, hasJump = false, false
   for i = 1, self.span do
     local n = self:get(i)
     for j = 1, 4 do
       if n.fx[j] then
         local fx = n.fx[j].name
-        if n.fx[j].name == FX.JUMP or n.fx[j].name == FX.SKIP or n.fx[j].name == FX.HALT then
+        if n.fx[j].name == FX.HALT then
+          skip = n.fx[j]
+          hasHalt = true
+        elseif n.fx[j].name == FX.JUMP and not hasHalt then
+          skip = n.fx[j]
+          hasJump = true
+        elseif n.fx[j].name == FX.SKIP and not hasHalt and not hasJump then
           skip = n.fx[j]
         elseif n.fx[j].name == FX.GROOVE then
           speed = n.fx[j]
