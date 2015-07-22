@@ -1,7 +1,7 @@
 require "luaFTM.FTM"
 
 local FXCHAR = {}
-string.gsub("FBDCE3?HI047PGZ12VYQRASXMHIJW", "()(.)", function (x, y) FXCHAR[x] = y end)
+string.gsub("FBDCE3?HI047PGZ12VYQRASXMHIJWHIJLOTZE", "()(.)", function (x, y) FXCHAR[x] = y end)
 FXCHAR[0] = " "
 
 local rowView = {}
