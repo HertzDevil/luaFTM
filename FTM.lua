@@ -130,8 +130,8 @@ function FTM:loadFTM (name)
   local f = assert(io.open(name, "rb"))
   local error = function (str, e) f:close(); error(str, (e or 1) + 1) end
   if f:read(18) ~= "FamiTracker Module" then error("File " .. name .. " is not a valid FamiTracker module") end
-  ftm.ver = getint(f)
-  if ftm.version > 0x440 then error("File " .. name .. " is not supported in this version") end
+  ftm.version = getint(f)
+  if ftm.version > 0x440 then error("File " .. name .. " is not supported in this version of luaFTM") end
   local currentPos, blockSize
   
   local blockTable = {}
