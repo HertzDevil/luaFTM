@@ -687,12 +687,14 @@ function FTM:saveFTM (name)
   local savedetune = function (ftm)
     if not ftm.detune or not next(ftm.detune) then return end
     local chunk = ""
+    local count = 0
     for i = 1, 6 do if ftm.detune[i] and size(ftm.detune[i]) > 0 then -- chips
       local detune = string.char(i - 1, size(ftm.detune[i]))
       for k, v in pairs(ftm.detune[i]) do detune = detune .. string.char(k - 1) .. intstr(v) end
       chunk = chunk .. detune
+      count = count + 1
     end end
-    return {name = "DETUNETABLES", version = 1, chunk = chunk}
+    return {name = "DETUNETABLES", version = 1, chunk = string.char(count) .. chunk}
   end
 
   local savegroove = function (ftm)
