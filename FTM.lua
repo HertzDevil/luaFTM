@@ -296,7 +296,7 @@ function FTM:loadFTM (name)
         if ver == 4 then
           local rel = getint(f)
           if rel >= 0 and rel < count then s.release = rel + 1 end
-          s.setting = getuint(f)
+          s.mode = getuint(f)
         end
         for j = 1, length do s[#s + 1] = getchar(f) end
       end
@@ -307,7 +307,7 @@ function FTM:loadFTM (name)
           local setting = getuint(f)
           if s then
             if rel >= 0 and rel < #s then s.release = rel + 1 end
-            s.setting = setting
+            s.mode = setting
           end
         end end
       elseif ver >= 6 then
@@ -315,7 +315,7 @@ function FTM:loadFTM (name)
           local s = ftm[seqt][typeMemo[i]][idMemo[i]]
           local rel = getuint(f)
           if rel >= 0 and rel < #s then s.release = rel + 1 end
-          s.setting = getuint(f)
+          s.mode = getuint(f)
         end
       end
     end
@@ -351,7 +351,7 @@ function FTM:loadFTM (name)
         if loop >= 0 and loop < count then s.loop = loop + 1 end
         local rel = getint(f)
         if rel >= 0 and rel < count then s.release = rel + 1 end
-        s.setting = getuint(f)
+        s.mode = getuint(f)
         for j = 1, count do s[#s + 1] = getchar(f) end
         ftm[seqt][seqType][id] = s
       end
