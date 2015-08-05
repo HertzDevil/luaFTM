@@ -22,10 +22,17 @@ end
 function rowView:get (ch)
   if ch < 1 or ch > self.span then error("attempt to access a non-existent channel with rowView", 2) end
   local tr = self.ftm.track[self.track]
-  local blank = not tr.pattern[ch] or
-                not tr.pattern[ch][tr.frame[self.frame][ch]] or
-                not tr.pattern[ch][tr.frame[self.frame][ch]][self.row]
-  return blank and {note = 0, oct = 0, inst = 0x40, vol = 0x10, fx = {}} or tr.pattern[ch][tr.frame[self.frame][ch]][self.row]
+  local source = tr.pattern[ch] and
+                 tr.pattern[ch][tr.frame[self.frame][ch]] and
+                 tr.pattern[ch][tr.frame[self.frame][ch]][self.row]
+  local note = {note = 0, oct = 0, inst = 0x40, vol = 0x10, fx = {}}
+  if source then
+    note.note, note.oct, note.inst, note.vol = source.note, source.oct, source.inst, source.vol
+    for k, v in pairs(source.fx) do
+      note.fx[k] = {name = v.name, param = v.param}
+    end
+  end
+  return note
 end
 
 function rowView:set (ch, t)
