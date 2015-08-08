@@ -38,7 +38,10 @@ end
 function rowView:set (ch, t)
   if ch < 1 or ch > self.span then error("attempt to access a non-existent channel with rowView", 2) end
   local tr = self.ftm.track[self.track]
-  tr.pattern[ch][tr.frame[self.frame][ch]][self.row] = t
+  local pID = tr.frame[self.frame][ch]
+  if not tr.pattern[ch] then tr.pattern[ch] = {} end
+  if not tr.pattern[ch][pID] then tr.pattern[ch][pID] = {} end
+  tr.pattern[ch][pID][self.row] = t
   self.lastFX = self:globalFX()
 end
 
