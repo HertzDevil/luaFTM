@@ -56,6 +56,52 @@ function FTM:hasChip (ch)
   return ch == CHIP.APU or math.floor(self.param.chip / ch) % 2 ~= 0
 end
 
+function FTM:setChip (ch)
+  local old = self:getTrackChs()
+  local used = {}
+  for _, ch in ipairs {"VRC6", "FDS", "N163", "S5B"} do used[ch] = self:hasChip(CHIP[ch]) end
+  self.param.chip = ch
+  for ch in pairs(used) do
+    if self:hasChip(CHIP[ch]) and not used[ch] then
+      self["seq" .. ch] = {}
+      for i = 1, ch == "FDS" and 3 or 5 do self["seq" .. ch][i] = {} end
+    elseif not self:hasChip(CHIP[ch]) and used[ch] then -- is this necessary?
+      self["seq" .. ch] = nil
+    end
+  end
+
+  self.param.chcount = self:getChCount()
+  if ch ~= 0 then self.param.machine = "NTSC" end
+  local new = self:getTrackChs()
+  local mapping = {}
+  for i, v in ipairs(old) do mapping[FTM.getChName(v)] = i end
+  local trackNew = {}
+  for k, tr in pairs(self.track) do
+    trackNew[k] = {maxeffect = {}, frame = {}, pattern = {}}
+    for i = 1, #tr.frame do trackNew[k].frame[i] = {} end
+    for _, v in ipairs {"title", "speed", "tempo", "rows", "groove"} do trackNew[k][v] = tr[v] end
+  end
+  for posNew, v in ipairs(new) do
+    local posOld = mapping[FTM.getChName(v)]
+    if posOld then
+      for i, tr in ipairs(trackNew) do
+        local oldTr = self.track[i]
+        tr.maxeffect[posNew] = oldTr.maxeffect[posOld]
+        tr.pattern[posNew] = oldTr.pattern[posOld]
+        for j = 1, #oldTr.frame do tr.frame[j][posNew] = oldTr.frame[j][posOld] end
+      end
+    else
+      for i, tr in ipairs(trackNew) do
+        local oldTr = self.track[i]
+        tr.maxeffect[posNew] = 1
+        tr.pattern[posNew] = {}
+        for j = 1, #oldTr.frame do tr.frame[j][posNew] = 1 end
+      end
+    end
+  end
+  self.track = trackNew
+end
+
 function FTM:getChCount ()
   local x = self.param.namcoCh
   for i, v in pairs(CHANS) do
@@ -70,7 +116,7 @@ function FTM:getTrackChs ()
     local ch = math.floor(2 ^ (i - 2))
     if self:hasChip(ch) then
       for j = 1, ch == CHIP.N163 and self.param.namcoCh or CHANS[ch] do
-        table.insert(t, {ch, j})
+        table.insert(t, {chip = ch, index = j})
       end
     end
   end
@@ -87,20 +133,17 @@ function FTM.getChName (t)
     [CHIP.N163] = "N163 Channel",
     [CHIP.S5B] = "5B Square",
   }
-  if type(fullName[t[1]]) == "string" then
-    return fullName[t[1]] .. " " .. tonumber(t[2])
-  elseif type(fullName[t[1]]) == "table" then
-    return fullName[t[1]][t[2]]
+  if type(fullName[t.chip]) == "string" then
+    return fullName[t.chip] .. " " .. tonumber(t.index)
+  elseif type(fullName[t.chip]) == "table" then
+    return fullName[t.chip][t.index]
   else
     return "???"
   end
 end
 
 function FTM:newTrack ()
-  local t = {speed = 6, tempo = 150, rows = 64}
-  t.maxeffect = {}
-  t.frame = {{}}
-  t.pattern = {}
+  local t = {speed = 6, tempo = 150, rows = 64, maxeffect = {}, frame = {{}}, pattern = {}}
   for i = 1, self:getChCount() do
     t.maxeffect[i] = 1
     t.frame[1][i] = 1
@@ -112,7 +155,7 @@ end
 function FTM:newFTM ()
   local ftm = {version = 0x440, track = {}, inst = {}, seqAPU = {{}, {}, {}, {}, {}}, dpcm = {}}
   setmetatable(ftm, self)
-  ftm.param = {chip = 0, machine = "NTSC", rate = 0, newVibrato = true, highlight = {4, 16}, FxxSplit = 32, namcoCh = 0}
+  ftm.param = {chip = 0, machine = "NTSC", rate = 0, newVibrato = true, highlight = {4, 16}, FxxSplit = 32, chcount = 5, namcoCh = 0}
   ftm.info = {title = "", author = "", copyright = ""}
   ftm.comment = {open = false, str = ""}
   ftm.track[1] = ftm:newTrack()
@@ -419,25 +462,25 @@ function FTM:loadFTM (name)
           row.vol = row.vol == 0 and 0x10 or (row.vol - 1) % 0x10
           if row.note == 0 then row.inst = 0x40 end
         end
-        if cType[1] == CHIP.N163 then for i = 1, 4 do
+        if cType.chip == CHIP.N163 then for i = 1, 4 do
           if row.fx[i] and row.fx[i].name == FX.SAMPLE_OFFSET then
             row.fx[i].name = FX.N163_WAVE_BUFFER
           end
         end end
         if ver == 3 then for i = 1, 4 do if row.fx[i] then
-          if cType[1] == CHIP.VRC7 then
+          if cType.chip == CHIP.VRC7 then
             if row.fx[i].name == FX.PORTA_DOWN then
               row.fx[i].name = FX.PORTA_UP
             elseif row.fx[i].name == FX.PORTA_UP then
               row.fx[i].name = FX.PORTA_DOWN
             end
-          elseif cType[1] == CHIP.FDS then
+          elseif cType.chip == CHIP.FDS then
             if row.fx[i].name == FX.PITCH then
               row.fx[i].param = (0x100 - row.fx[i].param) % 0x100
             end
           end
         end end end
-        if ver < 5 and cType[1] == CHIP.FDS then
+        if ver < 5 and cType.chip == CHIP.FDS then
           row.oct = math.min(row.oct + 2, 7)
         end
       end
