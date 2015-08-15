@@ -8,43 +8,43 @@ CHIP = {APU = 0, VRC6 = 1, VRC7 = 2, FDS = 4, MMC5 = 8, N163 = 16, S5B = 32}
 INST = enum {"APU", "VRC6", "VRC7", "FDS", "N163", "S5B"}
 CHANS = {[CHIP.APU] = 5, [CHIP.VRC6] = 3, [CHIP.VRC7] = 6, [CHIP.FDS] = 1, [CHIP.MMC5] = 2, [CHIP.S5B] = 3}
 FX = enum {
-	"SPEED",
-	"JUMP",
-	"SKIP",
-	"HALT",
-	"VOLUME",
-	"PORTAMENTO",
-	"PORTAOFF",
-	"SWEEPUP",
-	"SWEEPDOWN",
-	"ARPEGGIO",
-	"VIBRATO",
-	"TREMOLO",
-	"PITCH",
-	"DELAY",
-	"DAC",
-	"PORTA_UP",
-	"PORTA_DOWN",
-	"DUTY_CYCLE",
-	"SAMPLE_OFFSET",
-	"SLIDE_UP",
-	"SLIDE_DOWN",
-	"VOLUME_SLIDE",
-	"NOTE_CUT",
-	"RETRIGGER",
-	"DELAYED_VOLUME",
-	"FDS_MOD_DEPTH",
-	"FDS_MOD_SPEED_HI",
-	"FDS_MOD_SPEED_LO",
-	"DPCM_PITCH",
-	"SUNSOFT_ENV_LO",
-	"SUNSOFT_ENV_HI",
-	"SUNSOFT_ENV_TYPE",
-	"NOTE_RELEASE",
-	"GROOVE",
-	"TRANSPOSE",
-	"N163_WAVE_BUFFER",
-	"FDS_VOLUME",
+  "SPEED",
+  "JUMP",
+  "SKIP",
+  "HALT",
+  "VOLUME",
+  "PORTAMENTO",
+  "PORTAOFF",
+  "SWEEPUP",
+  "SWEEPDOWN",
+  "ARPEGGIO",
+  "VIBRATO",
+  "TREMOLO",
+  "PITCH",
+  "DELAY",
+  "DAC",
+  "PORTA_UP",
+  "PORTA_DOWN",
+  "DUTY_CYCLE",
+  "SAMPLE_OFFSET",
+  "SLIDE_UP",
+  "SLIDE_DOWN",
+  "VOLUME_SLIDE",
+  "NOTE_CUT",
+  "RETRIGGER",
+  "DELAYED_VOLUME",
+  "FDS_MOD_DEPTH",
+  "FDS_MOD_SPEED_HI",
+  "FDS_MOD_SPEED_LO",
+  "DPCM_PITCH",
+  "SUNSOFT_ENV_LO",
+  "SUNSOFT_ENV_HI",
+  "SUNSOFT_ENV_TYPE",
+  "NOTE_RELEASE",
+  "GROOVE",
+  "TRANSPOSE",
+  "N163_WAVE_BUFFER",
+  "FDS_VOLUME",
 }
 FX.NONE = 0; FX[0] = "NONE"
 
@@ -782,6 +782,20 @@ function FTM:saveFTM (name)
   
   out:write("END")
   out:close()
+end
+
+function FTM:clean (type)
+  for _, tr in pairs(self.track) do for _, c in pairs(tr.pattern) do for _, p in pairs(c) do for k, row in pairs(p) do
+    local blank = row.note == 0 and row.vol == 0x10 and row.inst == 0x40
+    for col in pairs(row.fx) do
+      if row.fx[col].name == 0 then
+        row.fx[col] = nil
+      else
+        blank = false
+      end
+    end
+    if blank then p[k] = nil end
+  end end end end
 end
 
 return FTM
