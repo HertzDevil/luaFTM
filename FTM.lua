@@ -6,6 +6,7 @@ require "luaFTM.utils"
 
 CHIP = {APU = 0, VRC6 = 1, VRC7 = 2, FDS = 4, MMC5 = 8, N163 = 16, S5B = 32}
 INST = enum {"APU", "VRC6", "VRC7", "FDS", "N163", "S5B"}
+DETUNE = enum {"NTSC", "PAL", "SAW", "VRC7", "FDS", "N163"}
 CHANS = {[CHIP.APU] = 5, [CHIP.VRC6] = 3, [CHIP.VRC7] = 6, [CHIP.FDS] = 1, [CHIP.MMC5] = 2, [CHIP.S5B] = 3}
 FX = enum {
   "SPEED",
@@ -505,10 +506,11 @@ function FTM:loadFTM (name)
   blockTable.DETUNETABLES = function (t, ver)
     if not t.detune then t.detune = {} end
     for i = 1, getuchar(f) do
-      t.detune[i] = {}
+      local tbl = getuchar(f)
+      t.detune[tbl] = {}
       for j = 1, getuchar(f) do
         local n = getuchar(f) + 1
-        t.detune[i][n] = getint(f)
+        t.detune[tbl][n] = getint(f)
       end
     end
   end
