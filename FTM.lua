@@ -703,12 +703,12 @@ function FTM:saveFTM (name)
     local chunk = ""
     for k, t in ipairs(ftm.track) do for i = 1, ftm.param.chcount do for k2, p in pairs(t.pattern[i]) do
       local pattern = intstr(k - 1, i - 1, k2 - 1, size(p))
-      for r, n in pairs(p) do if r ~= "id" then
+      if size(p) > 0 then for r, n in pairs(p) do if r ~= "id" then
         pattern = pattern .. intstr(r - 1) .. string.char(n.note, n.oct, n.inst, n.vol)
         for j = 1, t.maxeffect[i] do
           pattern = pattern .. (n.fx[j] and string.char(n.fx[j].name, n.fx[j].param) or "\x00\x00")
         end
-      end end
+      end end end
       chunk = chunk .. pattern
     end end end
     return {name = "PATTERNS", version = 5, chunk = chunk}
