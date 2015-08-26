@@ -786,18 +786,21 @@ function FTM:saveFTM (name)
   out:close()
 end
 
-function FTM:clean (type)
-  for _, tr in pairs(self.track) do for _, c in pairs(tr.pattern) do for _, p in pairs(c) do for k, row in pairs(p) do
-    local blank = row.note == 0 and row.vol == 0x10 and row.inst == 0x40
-    for col in pairs(row.fx) do
-      if row.fx[col].name == 0 then
-        row.fx[col] = nil
-      else
-        blank = false
+function FTM:clean ()
+  for _, tr in pairs(self.track) do for ck, c in pairs(tr.pattern) do for pk, p in pairs(c) do
+    for k, row in pairs(p) do
+      local blank = row.note == 0 and row.vol == 0x10 and row.inst == 0x40
+      for col in pairs(row.fx) do
+        if row.fx[col].name == FX.NONE then
+          row.fx[col] = nil
+        else
+          blank = false
+        end
       end
+      if blank then p[k] = nil end
     end
-    if blank then p[k] = nil end
-  end end end end
+    if not next(p) then c[pk] = nil end
+  end end end
 end
 
 return FTM
