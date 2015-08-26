@@ -291,7 +291,7 @@ function FTM:loadFTM (name)
         if loop >= 0 and loop < count then s.loop = loop + 1 end
         local rel = getint(f)
         if rel >= 0 and rel < count then s.release = rel + 1 end
-        s.setting = getuint(f)
+        s.mode = getuint(f)
         for j = 1, count do s[#s + 1] = getchar(f) end
         table.insert(ftm.seqFDS[i], s)
       end end
@@ -506,7 +506,7 @@ function FTM:loadFTM (name)
   blockTable.DETUNETABLES = function (t, ver)
     if not t.detune then t.detune = {} end
     for i = 1, getuchar(f) do
-      local tbl = getuchar(f)
+      local tbl = getuchar(f) + 1
       t.detune[tbl] = {}
       for j = 1, getuchar(f) do
         local n = getuchar(f) + 1
