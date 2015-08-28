@@ -71,6 +71,7 @@ function FTM:setChip (ch)
     end
   end
 
+  self.param.namcoCh = self:hasChip(CHIP.N163) and math.min(8, math.max(1, self.param.namcoCh)) or 0
   self.param.chcount = self:getChCount()
   if ch ~= 0 then self.param.machine = "NTSC" end
   local new = self:getTrackChs()
@@ -143,6 +144,20 @@ function FTM.getChName (t)
   end
 end
 
+function FTM:getDetune (ch)
+  if ch.chip == CHIP.FDS then
+    return DETUNE.FDS
+  elseif ch.chip == CHIP.VRC7 then
+    return DETUNE.VRC7
+  elseif ch.chip == CHIP.N163 then
+    return DETUNE.N163
+  elseif ch.chip == CHIP.VRC6 and ch.index == 3 then
+    return DETUNE.SAW
+  elseif ch.chip == CHIP.APU and ch.index <= 3 then
+    return self.param.machine == "PAL" and DETUNE.PAL or DETUNE.NTSC
+  end
+end
+
 function FTM:newTrack ()
   local t = {speed = 6, tempo = 150, rows = 64, maxeffect = {}, frame = {{}}, pattern = {}}
   for i = 1, self:getChCount() do
@@ -161,6 +176,59 @@ function FTM:newFTM ()
   ftm.comment = {open = false, str = ""}
   ftm.track[1] = ftm:newTrack()
   return ftm
+end
+
+function FTM:newSeq (chip, t, id)
+  local st = {
+    [CHIP.APU] = "APU", [CHIP.VRC6] = "VRC6", [CHIP.FDS] = "FDS",
+    [CHIP.MMC5] = "APU", [CHIP.N163] = "N163", [CHIP.S5B] = "S5B"
+  }
+  if st[chip] then
+    local seqtable = assert(self["seq" .. st[chip]][t], "Unknown sequence table")
+    if not id then for i = 1, 0x80 do if not seqtable[i] then
+      id = i; break
+    end end end
+    if not id then error("Sequence table is full") end
+    local s = {id = id, mode = 0}
+    seqtable[id] = s
+    return s -- setmetatable(t, FTMseq)
+  end
+end
+
+function FTM:newInst (chip, name, id)
+  if chip == CHIP.MMC5 then chip = CHIP.APU end
+  if not id then for i = 1, 0x40 do if not self.inst[i] then
+    id = i; break
+  end end end
+  if not id then error("Instrument table is full") end
+
+  local func = {
+    [CHIP.APU]  = function () return {instType = INST.APU, seq = {}, dpcm = {}} end,
+    [CHIP.VRC6] = function () return {instType = INST.VRC6, seq = {}} end,
+    [CHIP.VRC7] = function () return {instType = INST.VRC7, patch = 0, custom = {1, 33, 0, 0, 0, 240, 0, 15}} end,
+    [CHIP.FDS]  = function ()
+      local wave = { 0,  1, 12, 22, 32, 36, 39, 39, 42, 47, 47, 50, 48, 51, 54, 58,
+                    54, 55, 49, 50, 52, 61, 63, 63, 59, 56, 53, 51, 48, 47, 41, 35,
+                    35, 35, 41, 47, 48, 51, 53, 56, 59, 63, 63, 61, 52, 50, 49, 55,
+                    54, 58, 54, 51, 48, 50, 47, 47, 42, 39, 39, 36, 32, 22, 12,  1,}
+      local modt = {}
+      for i = 1, 32 do modt[i] = 0 end
+      return {instType = INST.FDS, seq = {}, FMrate = 0, FMdepth = 0, FMdelay = 0, wave = wave, mod = modt}
+    end,
+    [CHIP.N163] = function ()
+      local triangle = {}
+      for i = 1, 32 do triangle[i] = math.min(i - 1, 32 - i) end
+      return {instType = INST.N163, seq = {}, wave = {triangle}, wavePos = 0}
+    end,
+    [CHIP.S5B]  = function () return {instType = INST.S5B, seq = {}} end,
+  }
+  
+  if func[chip] then
+    local t = func[chip]()
+    t.name = name or "New instrument"
+    self.inst[id] = t
+    return t -- setmetatable(t, FTMinst)
+  end
 end
 
 function FTM:loadFTI (name)
