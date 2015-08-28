@@ -8,6 +8,7 @@ CHIP = {APU = 0, VRC6 = 1, VRC7 = 2, FDS = 4, MMC5 = 8, N163 = 16, S5B = 32}
 INST = enum {"APU", "VRC6", "VRC7", "FDS", "N163", "S5B"}
 DETUNE = enum {"NTSC", "PAL", "SAW", "VRC7", "FDS", "N163"}
 CHANS = {[CHIP.APU] = 5, [CHIP.VRC6] = 3, [CHIP.VRC7] = 6, [CHIP.FDS] = 1, [CHIP.MMC5] = 2, [CHIP.S5B] = 3}
+MAX = {INSTRUMENT = 0x40, SEQUENCE = 0x80, --[[FRAME = 0x100, PATTERN = 0x100, ROW = 0x100]]}
 FX = enum {
   "SPEED",
   "JUMP",
@@ -185,7 +186,7 @@ function FTM:newSeq (chip, t, id)
   }
   if st[chip] then
     local seqtable = assert(self["seq" .. st[chip]][t], "Unknown sequence table")
-    if not id then for i = 1, 0x80 do if not seqtable[i] then
+    if not id then for i = 1, MAX.SEQUENCE do if not seqtable[i] then
       id = i; break
     end end end
     if not id then error("Sequence table is full") end
@@ -197,7 +198,7 @@ end
 
 function FTM:newInst (chip, name, id)
   if chip == CHIP.MMC5 then chip = CHIP.APU end
-  if not id then for i = 1, 0x40 do if not self.inst[i] then
+  if not id then for i = 1, MAX.INSTRUMENT do if not self.inst[i] then
     id = i; break
   end end end
   if not id then error("Instrument table is full") end
@@ -256,7 +257,6 @@ function FTM:loadFTM (name)
     t.param.chcount = getint(f)
     t.param.machine = getint(f) == 1 and "PAL" or "NTSC"
     t.param.rate = getint(f)
-    if t.param.rate == 0 then t.param.rate = t.param.machine == "PAL" and 50 or 60 end
     t.param.newVibrato = ver > 2 and (getint(f) > 0) or false
     if ver > 3 then
       t.param.highlight[1] = getint(f)
@@ -529,7 +529,7 @@ function FTM:loadFTM (name)
             row.fx[1].param = row.fx[1].param + 1
           end
           row.vol = row.vol == 0 and 0x10 or (row.vol - 1) % 0x10
-          if row.note == 0 then row.inst = 0x40 end
+          if row.note == 0 then row.inst = MAX.INSTRUMENT end
         end
         if cType.chip == CHIP.N163 then for i = 1, 4 do
           if row.fx[i] and row.fx[i].name == FX.SAMPLE_OFFSET then
@@ -857,7 +857,7 @@ end
 function FTM:clean ()
   for _, tr in pairs(self.track) do for ck, c in pairs(tr.pattern) do for pk, p in pairs(c) do
     for k, row in pairs(p) do
-      local blank = row.note == 0 and row.vol == 0x10 and row.inst == 0x40
+      local blank = row.note == 0 and row.vol == 0x10 and row.inst == MAX.INSTRUMENT
       for col in pairs(row.fx) do
         if row.fx[col].name == FX.NONE then
           row.fx[col] = nil
